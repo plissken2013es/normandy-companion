@@ -79,7 +79,9 @@ export function guideSteps(entries, me, before, after) {
                 // show the move done but a marker from partway through it still missing (one tile scouted, not all)
                 i = j - 1;
                 at = i;
-                push({ text: t('cmp.g.move', { unit: un(e.unit), path: path.join(' → ') }), focus: { unit: e.unit, tiles: path }, arrow: { from: path[0], to: e.unit, kind: 'move', side: SIDES[bot] }, kind: 'table' });
+                // one arrow per tile stepped onto, not a single one straight from the start to the end
+                const arrows = path.slice(0, -1).map((from, k) => ({ from, to: k === path.length - 2 ? e.unit : path[k + 1], kind: 'move', side: SIDES[bot] }));
+                push({ text: t('cmp.g.move', { unit: un(e.unit), path: path.join(' → ') }), focus: { unit: e.unit, tiles: path }, arrow: arrows, kind: 'table' });
                 for (const x of scouted) push({ text: t('cmp.g.scoutedBot', { side: sideName(bot), tile: x.tile }), focus: { tile: x.tile }, kind: 'table' });
                 break;
             }
@@ -116,7 +118,7 @@ export function guideSteps(entries, me, before, after) {
                     after: e.dice ? t('cmp.g.dice', { dice: e.dice.join(' '), result }) : t('cmp.g.result', { result }),
                     dice: e.dice, hit: e.hit,
                     focus: { unit: e.target },
-                    arrow: e.kind === 'blast' ? null : { from: e.unit, to: e.target, kind: 'attack', side: SIDES[e.seat] },
+                    arrow: e.kind === 'blast' ? [] : [{ from: e.unit, to: e.target, kind: 'attack', side: SIDES[e.seat] }],
                     kind: 'attack',
                     mine,
                 });

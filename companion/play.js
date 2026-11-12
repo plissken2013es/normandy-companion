@@ -165,13 +165,13 @@ export class CompanionView {
         const step = this.steps[0];
         const req = !step && !this.busy && !this.session.over ? this.session.pending : null;
         const picks = new Map();
-        let arrow = null, focus = {};
+        let arrow = [], focus = {};
         if (step) {
             focus = step.focus ?? {};
-            arrow = step.arrow ?? null;
+            arrow = step.arrow ?? [];
         } else if (req) {
             this.picksFor(req, picks);
-            if (req.kind === 'roll') arrow = req.attack === 'blast' ? null : { from: req.unit, to: req.target, kind: 'attack', side: SIDES[req.attacker] };
+            if (req.kind === 'roll') arrow = req.attack === 'blast' ? [] : [{ from: req.unit, to: req.target, kind: 'attack', side: SIDES[req.attacker] }];
             if (req.kind === 'roll' || req.kind === 'casualty') focus = { unit: req.target ?? req.unit };
             if (req.kind === 'move') focus = { unit: req.unit };
         }
