@@ -12,6 +12,11 @@ export function cardName(type) {
     return c.squad ? `${tr(c.name)} ${c.squad}` : tr(c.name);
 }
 
+/** A card's name with its initiative, shown wherever a card is picked by name: "Fusilero A (5)". */
+export function cardLabel(type) {
+    return `${cardName(type)} (${TYPES[type].initiative})`;
+}
+
 /** Unit id `de:RA` → "Fusileros A (Alemania)"; own units without the side. */
 export function unitName(uid, viewer) {
     const type = unitType(uid);
@@ -34,7 +39,7 @@ export function optionLabel(req, o, viewer) {
     if (o.id === 'done') return t('opt.done');
     switch (req.kind) {
         case 'bid':
-            return `${cardName(o.card)} (${o.initiative})`;
+            return cardLabel(o.card);
         case 'play':
             if (o.action === 'hunker') return t('opt.hunker');
             if (o.action === 'rally') return t('opt.rally');
@@ -46,7 +51,7 @@ export function optionLabel(req, o, viewer) {
             return `${unitName(o.unit, viewer)} (${o.tile})`;
         case 'bolster':
         case 'inspire':
-            return cardName(o.card);
+            return cardLabel(o.card);
         default:
             return o.tile ?? o.id;
     }

@@ -13,7 +13,7 @@ import { CONTACT, bugMail, appKind } from './contact.js';
 import { withoutRoundLimit } from '../src/engine/state.js';
 import { TILES, hitChance, scenarioById, unitType } from '../src/engine/data.js';
 import { computerBot } from '../src/ai/computerBot.js';
-import { actionName, cardName, logLine, resultText, sideName, unitName } from '../src/ui/text.js';
+import { actionName, cardLabel, cardName, logLine, resultText, sideName, unitName } from '../src/ui/text.js';
 import { diceTray } from '../src/ui/combat.js';
 import { sfx, loadSamples } from '../src/ui/sound.js';
 import { BoardZoom } from '../src/ui/zoom.js';
@@ -323,7 +323,7 @@ export class CompanionView {
             case 'bid': {
                 const opts = [...req.options].sort((a, b) => b.initiative - a.initiative);
                 return box(t('cmp.ask.bid'), h('p', {}, t('cmp.ask.bidText')), view.players[this.botSeat].bidding ? h('p', { class: 'small muted' }, t('cmp.ask.bidBot')) : null,
-                    h('div', { class: 'opts grid' }, opts.map((o) => btn(o, t('cmp.ask.bidOpt', { card: cardName(o.card), n: o.initiative })))));
+                    h('div', { class: 'opts grid' }, opts.map((o) => btn(o, cardLabel(o.card)))));
             }
             case 'play':
                 return this.playCard(req, view);
@@ -340,9 +340,9 @@ export class CompanionView {
                 return box(t('cmp.ask.target'), hint, h('div', { class: 'opts grid' }, req.options.map((o) => btn(o, o.tile))));
             case 'bolster':
             case 'inspire':
-                return box(t(`cmp.ask.${req.kind}`, { left: req.left }), h('div', { class: 'opts' }, req.options.map((o) => btn(o, o.id === 'done' ? t('opt.done') : cardName(o.card), o.id === 'done' ? 'quiet' : ''))));
+                return box(t(`cmp.ask.${req.kind}`, { left: req.left }), h('div', { class: 'opts' }, req.options.map((o) => btn(o, o.id === 'done' ? t('opt.done') : cardLabel(o.card), o.id === 'done' ? 'quiet' : ''))));
             case 'leftover':
-                return box(t('cmp.ask.leftover', { left: req.left }), h('div', { class: 'opts grid' }, req.options.map((o) => btn(o, cardName(o.card)))));
+                return box(t('cmp.ask.leftover', { left: req.left }), h('div', { class: 'opts grid' }, req.options.map((o) => btn(o, cardLabel(o.card)))));
             case 'casualty':
                 return box(t('cmp.ask.casualty', { unit: un(req.unit) }), h('p', { class: 'small' }, t('cmp.ask.casualtyRule')),
                     h('div', { class: 'opts' }, req.options.map((o) => btn(o, t(`cmp.ask.from.${o.from}`)))));
@@ -369,7 +369,7 @@ export class CompanionView {
         return h('div', { class: 'card-box ask play' }, h('h3', {}, t('cmp.ask.play')),
             h('p', { class: 'small muted' }, t('cmp.ask.playHand', { n: p.handCount })),
             h('div', { class: 'opts grid' }, cards.map((type) => h('button', { class: 'opt card-opt', onclick: () => { this.sel = type; this.render(); } },
-                h('b', {}, cardName(type)), where(type) ? h('span', { class: 'small' }, ` · ${where(type)}`) : null))),
+                h('b', {}, cardLabel(type)), where(type) ? h('span', { class: 'small' }, ` · ${where(type)}`) : null))),
             end ? h('div', { class: 'buttons' }, btn(end, t('cmp.ask.end'), 'quiet')) : null);
     }
 
