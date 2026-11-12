@@ -44,8 +44,7 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
 .bar .score.de { background: color-mix(in srgb, var(--de) 55%, transparent); }
 .bar .ini.us { color: var(--us-l); }
 .bar .ini.de { color: var(--de-l); }
-.bar .extras { display: flex; flex-wrap: wrap; gap: 8px; }
-.bar .menu-btn { display: none; font-size: 1.1em; }
+.bar .menu-btn { font-size: 1.1em; }
 
 /* start screen */
 .notice { margin: 14px 16px 0; padding: 10px 14px; border-left: 4px solid var(--accent); background: var(--panel); border-radius: 6px; line-height: 1.45; }
@@ -171,8 +170,6 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
     .panel { border-left: none; border-top: 1px solid var(--line); }
     .bar { gap: 6px 10px; padding: 6px 10px; font-size: 0.9em; }
     .bar button { padding: 6px 8px; }
-    .bar .extras { display: none; }
-    .bar .menu-btn { display: inline-block; }
 }
 
 /* phone on its side: the map beside the panel, as on a big screen, and a bar of one line */
@@ -181,7 +178,5 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
     .bar { gap: 4px 10px; padding: 3px 10px; font-size: 0.85em; }
     .bar strong, .bar .ini { display: none; }
     .bar button { padding: 4px 8px; }
-    .bar .extras { display: none; }
-    .bar .menu-btn { display: inline-block; }
     .panel { padding: 8px; }
 }

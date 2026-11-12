@@ -78,6 +78,8 @@ export class CompanionView {
         // leaving full screen with Back or Esc changes the menu's label too
         this.onFullscreen = () => { if (!this.disposed) this.renderTop(this.view()); };
         for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, this.onFullscreen);
+        this.onKeydown = (e) => { if (e.key === 'Escape' && !this.modal.hidden) this.hideModal(); };
+        document.addEventListener('keydown', this.onKeydown);
         // a new game starts with the steps of its first round (draw your cards); a saved one where it was
         if (!game.answers?.length) this.steps = this.stepsOf(this.session.state.log, this.view());
         this.runBot(0, null);
@@ -86,6 +88,7 @@ export class CompanionView {
     dispose() {
         this.disposed = true;
         for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(ev, this.onFullscreen);
+        document.removeEventListener('keydown', this.onKeydown);
     }
 
     view() {
@@ -201,7 +204,6 @@ export class CompanionView {
             ...score,
             h('span', { class: 'grow' }),
             h('button', { onclick: () => this.undo(), disabled: this.busy || !this.marks.length }, `↶ ${t('cmp.menu.undo')}`),
-            h('span', { class: 'extras' }, this.menuItems().map(([label, fn]) => h('button', { onclick: fn }, label))),
             h('button', { class: 'menu-btn', title: t('cmp.menu'), onclick: () => this.showMenu() }, '☰'));
     }
 
