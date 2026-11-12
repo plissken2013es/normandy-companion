@@ -75,9 +75,11 @@ export function guideSteps(entries, me, before, after) {
                     else if (x.k === 'scouted' && x.seat === bot) scouted.push(x);
                     else break;
                 }
+                // `at` must cover every entry this step folds in, scouted markers included, or its own board would
+                // show the move done but a marker from partway through it still missing (one tile scouted, not all)
                 i = j - 1;
-                push({ text: t('cmp.g.move', { unit: un(e.unit), path: path.join(' → ') }), focus: { unit: e.unit, tiles: path }, arrow: { from: path[0], to: e.unit, kind: 'move', side: SIDES[bot] }, kind: 'table' });
                 at = i;
+                push({ text: t('cmp.g.move', { unit: un(e.unit), path: path.join(' → ') }), focus: { unit: e.unit, tiles: path }, arrow: { from: path[0], to: e.unit, kind: 'move', side: SIDES[bot] }, kind: 'table' });
                 for (const x of scouted) push({ text: t('cmp.g.scoutedBot', { side: sideName(bot), tile: x.tile }), focus: { tile: x.tile }, kind: 'table' });
                 break;
             }
