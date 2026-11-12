@@ -64,6 +64,7 @@ export class CompanionView {
         this.sc = scenarioById(this.session.setup.scenario);
         this.bot = computerBot(this.sc.id, this.botSeat, `${this.session.setup.seed}:bot`);
         this.marks = game.marks ?? []; // answers.length before each of the player's answers (undo)
+        this.panelOpen = {}; // the right panel's <details> are rebuilt every render; this keeps their open/closed state
         this.steps = [];
         this.sel = null; // the card chosen in a "play" decision, before its action
         this.busy = false;
@@ -168,7 +169,15 @@ export class CompanionView {
         this.zoom.show(drawMap(this.shown, { picks, onPick: (id) => this.pick(id), viewer: this.me, focus, arrow, terrain: pref('terrain') !== false }));
         const main = step ? this.stepCard(step) : this.busy ? h('div', { class: 'card-box thinking' }, t('cmp.thinking'))
             : this.session.over ? this.endCard() : req ? this.askCard(req, view) : null;
-        this.panel.replaceChildren(main ?? '', deckPanel(view, this.me), this.botPanel(view), this.logPanel(view));
+        this.panel.replaceChildren(main ?? '',
+            this.openPanel('deck', deckPanel(view, this.me)), this.openPanel('bot', this.botPanel(view)), this.openPanel('log', this.logPanel(view)));
+    }
+
+    /** `el` (a fresh <details>, rebuilt every render) opens as `key` was last left, and keeps that updated as the player toggles it. */
+    openPanel(key, el) {
+        el.open = this.panelOpen[key] ?? el.open;
+        el.addEventListener('toggle', () => { this.panelOpen[key] = el.open; });
+        return el;
     }
 
     renderTop(view) {
