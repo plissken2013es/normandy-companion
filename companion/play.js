@@ -379,7 +379,8 @@ export class CompanionView {
 
     logPanel(view) {
         const lines = view.log.slice(-60).map((e) => h('li', { class: e.k === 'round' ? 'round' : '' }, logLine(e, this.me)));
-        return h('details', { class: 'info log' }, h('summary', {}, t('cmp.menu.log')), h('ol', {}, lines.reverse()));
+        // reversed: newest first, so its number is the highest rather than "1" (the oldest shown line keeps that)
+        return h('details', { class: 'info log' }, h('summary', {}, t('cmp.menu.log')), h('ol', { reversed: true }, lines.reverse()));
     }
 
     // ------------------------------------------------------------------ the check and the code

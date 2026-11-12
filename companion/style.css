@@ -95,7 +95,7 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
 .roll.us .need { color: var(--us-l); }
 .info { background: var(--panel2); border-radius: 8px; padding: 6px 10px; }
 .info summary { cursor: pointer; font-size: 0.92em; }
-.info.log ol { padding-left: 18px; margin: 6px 0; font-size: 0.85em; max-height: 280px; overflow-y: auto; }
+.info.log ol { padding-left: 0px; margin: 0px 0; font-size: 0.85em; max-height: 280px; overflow-y: auto; list-style-position: inside; }
 .info.log li.round { font-weight: 600; margin-top: 4px; list-style: none; }
 .deck-panel .piles { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 0.88em; margin: 6px 0; }
 .deck-panel .piles b { white-space: nowrap; }
