@@ -90,6 +90,7 @@ export const es = {
     'cmp.roll.sumBlast': 'Defensa {defence} + cobertura {cover} = {total}',
     'cmp.roll.hit': 'Impacto',
     'cmp.roll.miss': 'Fallo',
+    'cmp.roll.go': '¡Tira!',
     // steps for the table
     'cmp.g.bids': 'Pujas: {mine} ({a}) contra {theirs} ({b}) del ordenador.',
     'cmp.g.initiative': 'La iniciativa es para {side}.',
@@ -260,6 +261,7 @@ export const en = {
     'cmp.roll.sumBlast': 'Defence {defence} + cover {cover} = {total}',
     'cmp.roll.hit': 'Hit',
     'cmp.roll.miss': 'Miss',
+    'cmp.roll.go': 'Roll!',
     'cmp.g.bids': 'Bids: your {mine} ({a}) against the computer\'s {theirs} ({b}).',
     'cmp.g.initiative': 'The initiative goes to {side}.',
     'cmp.g.kept': 'A tie: the initiative stays with {side}.',

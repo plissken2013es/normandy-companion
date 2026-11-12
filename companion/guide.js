@@ -116,7 +116,7 @@ export function guideSteps(entries, me, before, after) {
                 push({
                     text,
                     after: e.dice ? t('cmp.g.dice', { dice: e.dice.join(' '), result }) : t('cmp.g.result', { result }),
-                    dice: e.dice, hit: e.hit,
+                    dice: e.dice, hit: e.hit, total: e.total,
                     focus: { unit: e.target },
                     arrow: e.kind === 'blast' ? [] : [{ from: e.unit, to: e.target, kind: 'attack', side: SIDES[e.seat] }],
                     kind: 'attack',

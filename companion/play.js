@@ -267,11 +267,21 @@ export class CompanionView {
             box.append(result);
             if (step.dice && !step.rolled) {
                 buttons.hidden = true;
-                this.rollDice(step).then(() => {
+                const go = () => this.rollDice(step).then(() => {
                     step.rolled = true;
                     result.textContent = step.after;
                     buttons.hidden = false;
                 });
+                if (step.mine) go(); // the player already paused to pick the target and saw the odds
+                else {
+                    // the computer's attack: a beat to see who is firing at what, and the odds, before the dice roll
+                    const pct = Math.round(100 * hitChance(step.total, step.dice.length));
+                    const need = step.total <= 1 ? t('cmp.roll.sure') : step.total >= 10 ? t('cmp.roll.needZero') : t('cmp.roll.need', { total: step.total });
+                    const ready = h('p', { class: 'small muted' }, `${need} (${pct} %)`);
+                    const rollBtn = h('div', { class: 'buttons' },
+                        h('button', { class: 'primary', onclick: () => { ready.remove(); rollBtn.remove(); go(); } }, t('cmp.roll.go')));
+                    box.append(ready, rollBtn);
+                }
             } else result.textContent = step.after;
         }
         box.append(buttons);
