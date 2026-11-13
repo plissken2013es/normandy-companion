@@ -120,16 +120,22 @@ export class CompanionView {
         }
         this.busy = false;
         const entries = this.session.state.log.slice(logStart);
-        if (logStart > 0 || before) this.steps.push(...this.stepsOf(entries, before));
+        if (logStart > 0 || before) this.steps.push(...this.stepsOf(entries, before, logStart));
         this.save();
         this.render();
     }
 
-    /** The steps of these log entries, each with the board as it stands after it. */
-    stepsOf(entries, before) {
+    /**
+     * The steps of these log entries, each with the board — and the Log panel's entries — as they stand after it, so
+     * neither gets ahead of the "Done" cards the player is clicking through. `logStart` bounds the log *before*
+     * this batch: `before.log` is a live reference into the engine's own array (view() never copies it), already
+     * grown by the time this runs, so the "so far" log for each step is built from a stable slice instead.
+     */
+    stepsOf(entries, before, logStart = 0) {
         const base = before ?? this.view();
+        const prior = this.session.state.log.slice(0, logStart);
         return guideSteps(entries, this.me, before, this.view())
-            .map((step) => ({ ...step, board: boardAt(base, entries, step.at ?? entries.length - 1) }));
+            .map((step) => ({ ...step, board: boardAt(base, entries, step.at ?? entries.length - 1), log: prior.concat(entries.slice(0, (step.at ?? entries.length - 1) + 1)) }));
     }
 
     undo() {
@@ -170,7 +176,8 @@ export class CompanionView {
         const main = step ? this.stepCard(step) : this.busy ? h('div', { class: 'card-box thinking' }, t('cmp.thinking'))
             : this.session.over ? this.endCard() : req ? this.askCard(req, view) : null;
         this.panel.replaceChildren(main ?? '',
-            this.openPanel('deck', deckPanel(view, this.me)), this.openPanel('bot', this.botPanel(view)), this.openPanel('log', this.logPanel(view)));
+            this.openPanel('deck', deckPanel(view, this.me)), this.openPanel('bot', this.botPanel(view)),
+            this.openPanel('log', step ? this.logPanel(view, step.log) : this.logPanel(view)));
     }
 
     /** `el` (a fresh <details>, rebuilt every render) opens as `key` was last left, and keeps that updated as the player toggles it. */
@@ -386,8 +393,9 @@ export class CompanionView {
             h('p', { class: 'small' }, h('b', {}, `${t('game.supply')}: `), groups(p.supply)));
     }
 
-    logPanel(view) {
-        const lines = view.log.slice(-60).map((e) => h('li', { class: e.k === 'round' ? 'round' : '' }, logLine(e, this.me)));
+    /** `entries` defaults to the live, fully caught-up log; a pending step passes its own (not-yet-revealed) one. */
+    logPanel(view, entries = view.log) {
+        const lines = entries.slice(-60).map((e) => h('li', { class: e.k === 'round' ? 'round' : '' }, logLine(e, this.me)));
         // reversed: newest first, so its number is the highest rather than "1" (the oldest shown line keeps that)
         return h('details', { class: 'info log' }, h('summary', {}, t('cmp.menu.log')), h('ol', { reversed: true }, lines.reverse()));
     }
