@@ -38,12 +38,20 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
 .row { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .bar { display: flex; gap: 10px 14px; align-items: center; padding: 6px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+/* the game's bar only: its own two columns, matching .cplay main's below, so bar-info centres over the map itself
+   and not the panel beside it; the setup screen's header (also .bar, outside .cplay) stays the plain flex row */
+.cplay .bar { display: grid; grid-template-columns: 1fr minmax(300px, 400px); }
 .bar .sub { font-size: 0.9em; }
 .bar .score { padding: 2px 9px; border-radius: 10px; font-size: 0.9em; }
 .bar .score.us { background: color-mix(in srgb, var(--us) 55%, transparent); }
 .bar .score.de { background: color-mix(in srgb, var(--de) 55%, transparent); }
-.bar .ini.us { color: var(--us-l); }
-.bar .ini.de { color: var(--de-l); }
+/* the rest of the bar, centred in the space left of Undo/☰ (bar-actions, fixed width) */
+.bar-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bar-row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.ini-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.ini-dot.us { background: var(--us-l); }
+.ini-dot.de { background: var(--de-l); }
+.bar-actions { display: flex; gap: 8px; flex: none; justify-self: end; }
 /* a fixed square, not padding + the glyph's own line box: some icon characters carry taller line metrics than
    others at the same font-size, which made Undo and ☰ sit at different sizes despite identical CSS */
 .bar .menu-btn { font-size: 1.1em; width: 2.2em; height: 2.2em; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
@@ -172,6 +180,7 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
     .setup-body, .scen-info { grid-template-columns: minmax(0, 1fr); }
     .cplay main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 50dvh) minmax(0, 1fr); }
     .panel { border-left: none; border-top: 1px solid var(--line); }
+    .cplay .bar { display: flex; } /* map and panel stack instead of sitting side by side: no columns to mirror */
     .bar { gap: 6px 10px; padding: 6px 10px; font-size: 0.9em; }
     .bar button { padding: 6px 8px; }
 }
@@ -179,8 +188,9 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
 /* phone on its side: the map beside the panel, as on a big screen, and a bar of one line */
 @media (max-height: 500px) and (orientation: landscape) {
     .cplay main { grid-template-columns: minmax(0, 1fr) minmax(280px, 44vw); }
+    .cplay .bar { grid-template-columns: minmax(0, 1fr) minmax(280px, 44vw); } /* same columns as main, narrower here too */
     .bar { gap: 4px 10px; padding: 3px 10px; font-size: 0.85em; }
-    .bar strong, .bar .ini { display: none; }
+    .bar strong { display: none; }
     .bar button { padding: 4px 8px; }
     .panel { padding: 8px; }
 }

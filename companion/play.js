@@ -197,14 +197,18 @@ export class CompanionView {
             return h('span', { class: `score ${side}` }, win.points ? t('cmp.score.points', { side: who, n: pointsOf(view, side), need: win.points })
                 : t('cmp.score.pin', { side: who, n: riflemenOn(view, 1 - seat) }));
         });
+        // whoever has the initiative gets the dot at their own outer edge: left of US, right of Germany
+        const dot = h('span', { class: `ini-dot ${SIDES[view.initiative]}`, title: t('cmp.initiative', { side: sideName(view.initiative) }) });
         this.top.replaceChildren(
-            h('strong', {}, `${this.sc.id}. ${tr(this.sc.title)}`),
-            h('span', { class: 'muted' }, t('cmp.round', { n: Math.max(1, view.round) })),
-            h('span', { class: `ini ${SIDES[view.initiative]}` }, t('cmp.initiative', { side: sideName(view.initiative) })),
-            ...score,
-            h('span', { class: 'grow' }),
-            h('button', { class: 'menu-btn', title: t('cmp.menu.undo'), onclick: () => this.undo(), disabled: this.busy || !this.marks.length }, h('span', { class: 'undo-ico' }, '↶')),
-            h('button', { class: 'menu-btn', title: t('cmp.menu'), onclick: () => this.showMenu() }, '☰'));
+            h('div', { class: 'bar-info' },
+                h('strong', {}, `${this.sc.id}. ${tr(this.sc.title)}`),
+                h('div', { class: 'bar-row2' },
+                    view.initiative === 0 ? dot : null, score[0],
+                    h('span', { class: 'muted' }, t('cmp.round', { n: Math.max(1, view.round) })),
+                    score[1], view.initiative === 1 ? dot : null)),
+            h('div', { class: 'bar-actions' },
+                h('button', { class: 'menu-btn', title: t('cmp.menu.undo'), onclick: () => this.undo(), disabled: this.busy || !this.marks.length }, h('span', { class: 'undo-ico' }, '↶')),
+                h('button', { class: 'menu-btn', title: t('cmp.menu'), onclick: () => this.showMenu() }, '☰')));
     }
 
     /** What the bar offers beside Undo; on a phone it goes behind ☰. */
