@@ -37,14 +37,18 @@ input, select, textarea { background: #14160f; color: var(--ink); border: 1px so
 .grow { flex: 1; }
 .row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.bar { display: flex; gap: 10px 14px; align-items: center; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.bar { display: flex; gap: 10px 14px; align-items: center; padding: 6px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .bar .sub { font-size: 0.9em; }
 .bar .score { padding: 2px 9px; border-radius: 10px; font-size: 0.9em; }
 .bar .score.us { background: color-mix(in srgb, var(--us) 55%, transparent); }
 .bar .score.de { background: color-mix(in srgb, var(--de) 55%, transparent); }
 .bar .ini.us { color: var(--us-l); }
 .bar .ini.de { color: var(--de-l); }
-.bar .menu-btn { font-size: 1.1em; }
+/* a fixed square, not padding + the glyph's own line box: some icon characters carry taller line metrics than
+   others at the same font-size, which made Undo and ☰ sit at different sizes despite identical CSS */
+.bar .menu-btn { font-size: 1.1em; width: 2.2em; height: 2.2em; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.bar .undo-ico { font-size: 1.5em; } /* bigger glyph, same button box: the box is fixed above, not font-size driven */
+.bar button { padding: 6px 10px; } /* the global 8px 12px is sized for tap targets; a tight header doesn't need it */
 
 /* start screen */
 .notice { margin: 14px 16px 0; padding: 10px 14px; border-left: 4px solid var(--accent); background: var(--panel); border-radius: 6px; line-height: 1.45; }

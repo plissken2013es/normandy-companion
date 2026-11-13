@@ -203,7 +203,7 @@ export class CompanionView {
             h('span', { class: `ini ${SIDES[view.initiative]}` }, t('cmp.initiative', { side: sideName(view.initiative) })),
             ...score,
             h('span', { class: 'grow' }),
-            h('button', { onclick: () => this.undo(), disabled: this.busy || !this.marks.length }, `↶ ${t('cmp.menu.undo')}`),
+            h('button', { class: 'menu-btn', title: t('cmp.menu.undo'), onclick: () => this.undo(), disabled: this.busy || !this.marks.length }, h('span', { class: 'undo-ico' }, '↶')),
             h('button', { class: 'menu-btn', title: t('cmp.menu'), onclick: () => this.showMenu() }, '☰'));
     }
 
