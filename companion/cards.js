@@ -67,7 +67,7 @@ export function deckPanel(view, me, { open = false } = {}) {
     const p = view.players[me];
     const row = (label, text) => [h('b', {}, label), h('span', {}, text || '—')];
     return h('details', { class: 'info deck-panel', open: open || null },
-        h('summary', {}, `${t('cmp.deck.title', { side: sideName(me) })} · ${t('cmp.deck.counts', { deck: p.deckCount, hand: p.handCount })}`),
+        h('summary', {}, `${sideName(me)} (${t('cmp.you')}) · ${t('cmp.deck.counts', { deck: p.deckCount, hand: p.handCount })}`),
         h('div', { class: 'piles' },
             row(t('cmp.deck.hidden'), cardList(p.hidden)),
             row(t('cmp.deck.discard'), cardList(p.discard)),
