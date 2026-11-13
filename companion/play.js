@@ -20,7 +20,7 @@ import { BoardZoom } from '../src/ui/zoom.js';
 import { canFullscreen, isFullscreen, toggleFullscreen } from '../src/ui/touch.js';
 import { coverText, drawMap, tileAtPoint } from './map.js';
 import { boardAt, guideSteps } from './guide.js';
-import { deckPanel, pileRows } from './cards.js';
+import { cardsPanel } from './cards.js';
 
 export const SAVE = 'unc-save';
 const SIDES = ['us', 'de'];
@@ -179,7 +179,7 @@ export class CompanionView {
         const main = step ? this.stepCard(step) : this.busy ? h('div', { class: 'card-box thinking' }, t('cmp.thinking'))
             : this.session.over ? this.endCard() : req ? this.askCard(req, view) : null;
         this.panel.replaceChildren(main ?? '',
-            this.openPanel('deck', deckPanel(view, this.me)), this.openPanel('bot', this.botPanel(view)),
+            this.openPanel('cards', cardsPanel(view, this.me, this.botSeat)),
             this.openPanel('log', step ? this.logPanel(view, step.log) : this.logPanel(view)));
     }
 
@@ -387,15 +387,6 @@ export class CompanionView {
             h('div', { class: 'opts two' }, req.options.map((o) => btn(o, t(`cmp.roll.${o.id}`), o.id))));
     }
 
-    botPanel(view) {
-        const p = view.players[this.botSeat];
-        // same row/grid layout as deckPanel's, so both panels read the same way; only discard and supply are public
-        return h('details', { class: 'info bot' }, h('summary', {}, `${sideName(this.botSeat)} (${t('cmp.bot')}) · ${t('game.handCount', { n: p.handCount })} · ${t('game.deck', { n: p.deckCount })}`),
-            h('div', { class: 'piles' },
-                pileRows(t('game.discardPile'), p.discard),
-                pileRows(t('game.supply'), p.supply)));
-    }
-
     /** `entries` defaults to the live, fully caught-up log; a pending step passes its own (not-yet-revealed) one. */
     logPanel(view, entries = view.log) {
         const lines = entries.slice(-60).map((e) => h('li', { class: e.k === 'round' ? 'round' : '' }, logLine(e, this.me)));
@@ -447,7 +438,7 @@ export class CompanionView {
             h('p', { class: 'small' }, t('cmp.check.intro')),
             h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, t('cmp.check.tile')), h('th', {}, t('cmp.check.units')), h('th', {}, t('cmp.check.markers')))), h('tbody', {}, rows)),
             off.length ? h('p', { class: 'small' }, h('b', {}, `${t('cmp.check.offBoard')}: `), off.join(', ')) : null,
-            deckPanel(view, this.me, { open: true }),
+            cardsPanel(view, this.me, this.botSeat, { open: true }),
             h('div', { class: 'buttons' }, h('button', { class: 'primary', onclick: () => this.hideModal() }, t('cmp.close')))));
     }
 

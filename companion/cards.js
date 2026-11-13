@@ -67,29 +67,30 @@ const countTypes = (types) => {
     return m;
 };
 
-/** A label + one cell, as one row of a `.piles` grid (deckPanel, botPanel): a left column of labels, aligned. */
-export const row = (label, text) => [h('b', {}, label), h('span', {}, text || '—')];
-
-/**
- * A label + its cards, one row per distinct type (card ids or a { type: n } count): the label only on the first
- * row, so several types under the same pile still read as one aligned block, not a comma-separated line.
- */
-export function pileRows(label, cards) {
+/** One pile's cards as a stacked list, one line per distinct type (card ids or a { type: n } count). */
+function pileCol(cards, right) {
     const types = typeCounts(cards);
-    if (!types.length) return row(label, '');
-    return types.flatMap(([type, k], i) => row(i === 0 ? label : '', `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`));
+    return h('div', { class: `cards-col${right ? ' right' : ''}` }, types.length ? types.map(([type, k]) => h('div', {}, `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`)) : '—');
 }
 
-/** The player's cards as the app counts them: hand and deck only together, the rest pile by pile. */
-export function deckPanel(view, me, { open = false } = {}) {
-    const p = view.players[me];
-    return h('details', { class: 'info deck-panel', open: open || null },
-        h('summary', {}, `${sideName(me)} (${t('cmp.you')}) · ${t('cmp.deck.counts', { deck: p.deckCount, hand: p.handCount })}`),
-        h('div', { class: 'piles' },
-            pileRows(t('cmp.deck.hidden'), p.hidden),
-            pileRows(t('cmp.deck.discard'), p.discard),
-            pileRows(t('cmp.deck.play'), p.play),
-            pileRows(t('cmp.deck.supply'), p.supply),
-            pileRows(t('cmp.deck.removed'), p.removed ?? [])));
+/** A section: its title centered on its own row, then one column of cards per side below it. */
+const section = (title, meCards, botCards) => [h('div', { class: 'cards-title' }, title), pileCol(meCards), pileCol(botCards, true)];
+
+/** Both players' cards side by side, so the same pile is easy to compare between them. */
+export function cardsPanel(view, me, botSeat, { open = false } = {}) {
+    const pMe = view.players[me];
+    const pBot = view.players[botSeat];
+    return h('details', { class: 'info cards-panel', open: open || null },
+        h('summary', {}, t('cmp.cards.title')),
+        h('div', { class: 'cards-grid' },
+            h('div', { class: 'cards-head' }, sideName(me), h('div', {}, `(${t('cmp.you')})`)),
+            h('div', { class: 'cards-head right' }, sideName(botSeat), h('div', {}, `(${t('cmp.bot')})`)),
+            h('div', { class: 'cards-title' }, h('div', {}, t('cmp.deck.handDeck')), h('div', {}, t('cmp.deck.play'))),
+            h('div', { class: 'cards-col' }, `${pMe.deckCount} / ${pMe.handCount}`),
+            h('div', { class: 'cards-col right' }, `${pBot.deckCount} / ${pBot.handCount}`),
+            pileCol(pMe.play), pileCol(pBot.play, true),
+            section(t('cmp.deck.discard'), pMe.discard, pBot.discard),
+            section(t('cmp.deck.supply'), pMe.supply, pBot.supply),
+            section(t('cmp.deck.removed'), pMe.removed ?? [], pBot.removed ?? [])));
 }
 
