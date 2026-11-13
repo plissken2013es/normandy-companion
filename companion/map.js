@@ -89,13 +89,13 @@ export function drawMap(view, { picks = new Map(), onPick = () => {}, viewer, fo
             g.append(s('path', { d: `M${T - 30} 6 h24 l-6 8.5 l6 8.5 h-24 z`, class: 'flag' }));
             g.append(s('text', { x: T - 20, y: 19.5, class: 'flag-t' }, val));
         }
-        let mx = 12;
+        let mx = 15;
         for (const side of SIDES) {
             const c = view.control[tile.id][side];
             if (!c) continue;
             g.append(s('g', { class: `cmark ${side} ${c}` },
-                s('circle', { cx: mx, cy: 13, r: 9.5 }),
-                s('text', { x: mx, y: 17 }, c === 'controlled' ? '★' : '◉')));
+                s('circle', { cx: mx, cy: 16, r: 9.5 }),
+                s('text', { x: mx, y: 20 }, c === 'controlled' ? '★' : '◉')));
             mx += 22;
         }
         for (const sp of spawnsAt[tile.id] ?? []) {
