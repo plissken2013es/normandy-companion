@@ -8,12 +8,17 @@ import { h } from '../src/ui/dom.js';
 import { t } from '../src/i18n/index.js';
 import { cardName, sideName } from '../src/ui/text.js';
 
-/** "Rifleman A ×2, Scout B" from card ids or a { type: n } count. */
-export function cardList(cards) {
+/** Card ids or a { type: n } count, grouped: [["RA", 2], ["SB", 1]]. */
+function typeCounts(cards) {
     const n = {};
     if (Array.isArray(cards)) for (const c of cards) n[c.split(':')[1]] = (n[c.split(':')[1]] ?? 0) + 1;
     else Object.assign(n, cards ?? {});
-    return Object.entries(n).filter(([, k]) => k > 0).map(([type, k]) => `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`).join(', ');
+    return Object.entries(n).filter(([, k]) => k > 0);
+}
+
+/** "Rifleman A ×2, Scout B" from card ids or a { type: n } count: one line, for a sentence. */
+export function cardList(cards) {
+    return typeCounts(cards).map(([type, k]) => `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`).join(', ');
 }
 
 /**
@@ -62,17 +67,29 @@ const countTypes = (types) => {
     return m;
 };
 
+/** A label + one cell, as one row of a `.piles` grid (deckPanel, botPanel): a left column of labels, aligned. */
+export const row = (label, text) => [h('b', {}, label), h('span', {}, text || '—')];
+
+/**
+ * A label + its cards, one row per distinct type (card ids or a { type: n } count): the label only on the first
+ * row, so several types under the same pile still read as one aligned block, not a comma-separated line.
+ */
+export function pileRows(label, cards) {
+    const types = typeCounts(cards);
+    if (!types.length) return row(label, '');
+    return types.flatMap(([type, k], i) => row(i === 0 ? label : '', `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`));
+}
+
 /** The player's cards as the app counts them: hand and deck only together, the rest pile by pile. */
 export function deckPanel(view, me, { open = false } = {}) {
     const p = view.players[me];
-    const row = (label, text) => [h('b', {}, label), h('span', {}, text || '—')];
     return h('details', { class: 'info deck-panel', open: open || null },
         h('summary', {}, `${sideName(me)} (${t('cmp.you')}) · ${t('cmp.deck.counts', { deck: p.deckCount, hand: p.handCount })}`),
         h('div', { class: 'piles' },
-            row(t('cmp.deck.hidden'), cardList(p.hidden)),
-            row(t('cmp.deck.discard'), cardList(p.discard)),
-            row(t('cmp.deck.play'), cardList(p.play)),
-            row(t('cmp.deck.supply'), cardList(p.supply)),
-            row(t('cmp.deck.removed'), cardList(p.removed ?? []))));
+            pileRows(t('cmp.deck.hidden'), p.hidden),
+            pileRows(t('cmp.deck.discard'), p.discard),
+            pileRows(t('cmp.deck.play'), p.play),
+            pileRows(t('cmp.deck.supply'), p.supply),
+            pileRows(t('cmp.deck.removed'), p.removed ?? [])));
 }
 

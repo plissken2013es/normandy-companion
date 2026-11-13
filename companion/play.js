@@ -20,7 +20,7 @@ import { BoardZoom } from '../src/ui/zoom.js';
 import { canFullscreen, isFullscreen, toggleFullscreen } from '../src/ui/touch.js';
 import { coverText, drawMap, tileAtPoint } from './map.js';
 import { boardAt, guideSteps } from './guide.js';
-import { deckPanel } from './cards.js';
+import { deckPanel, pileRows } from './cards.js';
 
 export const SAVE = 'unc-save';
 const SIDES = ['us', 'de'];
@@ -389,14 +389,11 @@ export class CompanionView {
 
     botPanel(view) {
         const p = view.players[this.botSeat];
-        const groups = (cards) => {
-            const n = {};
-            for (const c of cards) n[c.split(':')[1]] = (n[c.split(':')[1]] ?? 0) + 1;
-            return Object.entries(n).map(([type, k]) => `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`).join(', ') || t('cmp.check.none');
-        };
+        // same row/grid layout as deckPanel's, so both panels read the same way; only discard and supply are public
         return h('details', { class: 'info bot' }, h('summary', {}, `${sideName(this.botSeat)} (${t('cmp.bot')}) · ${t('game.handCount', { n: p.handCount })} · ${t('game.deck', { n: p.deckCount })}`),
-            h('p', { class: 'small' }, h('b', {}, `${t('game.discardPile')}: `), groups(p.discard)),
-            h('p', { class: 'small' }, h('b', {}, `${t('game.supply')}: `), groups(p.supply)));
+            h('div', { class: 'piles' },
+                pileRows(t('game.discardPile'), p.discard),
+                pileRows(t('game.supply'), p.supply)));
     }
 
     /** `entries` defaults to the live, fully caught-up log; a pending step passes its own (not-yet-revealed) one. */
