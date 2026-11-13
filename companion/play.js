@@ -65,6 +65,7 @@ export class CompanionView {
         this.bot = computerBot(this.sc.id, this.botSeat, `${this.session.setup.seed}:bot`);
         this.marks = game.marks ?? []; // answers.length before each of the player's answers (undo)
         this.panelOpen = {}; // the right panel's <details> are rebuilt every render; this keeps their open/closed state
+        this.cardsCollapsed = {}; // which sections of the cards panel are collapsed, shared between it and the check modal
         this.steps = [];
         this.sel = null; // the card chosen in a "play" decision, before its action
         this.busy = false;
@@ -179,7 +180,7 @@ export class CompanionView {
         const main = step ? this.stepCard(step) : this.busy ? h('div', { class: 'card-box thinking' }, t('cmp.thinking'))
             : this.session.over ? this.endCard() : req ? this.askCard(req, view) : null;
         this.panel.replaceChildren(main ?? '',
-            this.openPanel('cards', cardsPanel(view, this.me, this.botSeat)),
+            this.openPanel('cards', cardsPanel(view, this.me, this.botSeat, { collapsed: this.cardsCollapsed, onToggle: (key) => this.toggleCards(key, () => this.render()) })),
             this.openPanel('log', step ? this.logPanel(view, step.log) : this.logPanel(view)));
     }
 
@@ -188,6 +189,11 @@ export class CompanionView {
         el.open = this.panelOpen[key] ?? el.open;
         el.addEventListener('toggle', () => { this.panelOpen[key] = el.open; });
         return el;
+    }
+
+    toggleCards(key, redraw) {
+        this.cardsCollapsed[key] = !this.cardsCollapsed[key];
+        redraw();
     }
 
     renderTop(view) {
@@ -438,7 +444,7 @@ export class CompanionView {
             h('p', { class: 'small' }, t('cmp.check.intro')),
             h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, t('cmp.check.tile')), h('th', {}, t('cmp.check.units')), h('th', {}, t('cmp.check.markers')))), h('tbody', {}, rows)),
             off.length ? h('p', { class: 'small' }, h('b', {}, `${t('cmp.check.offBoard')}: `), off.join(', ')) : null,
-            cardsPanel(view, this.me, this.botSeat, { open: true }),
+            cardsPanel(view, this.me, this.botSeat, { open: true, collapsed: this.cardsCollapsed, onToggle: (key) => this.toggleCards(key, () => this.showCheck()) }),
             h('div', { class: 'buttons' }, h('button', { class: 'primary', onclick: () => this.hideModal() }, t('cmp.close')))));
     }
 

@@ -73,11 +73,22 @@ function pileCol(cards, right) {
     return h('div', { class: `cards-col${right ? ' right' : ''}` }, types.length ? types.map(([type, k]) => h('div', {}, `${cardName(type)}${k > 1 ? ` ×${k}` : ''}`)) : '—');
 }
 
-/** A section: its title centered on its own row, then one column of cards per side below it. */
-const section = (title, meCards, botCards) => [h('div', { class: 'cards-title' }, title), pileCol(meCards), pileCol(botCards, true)];
+/** A section's title, one line per string in `titles`: a ▾/▸ arrow on the first line, clickable to toggle `key`. */
+function sectionTitle(key, titles, collapsed, onToggle) {
+    const lines = Array.isArray(titles) ? titles : [titles];
+    const arrow = collapsed[key] ? '▸' : '▾';
+    return h('div', { class: 'cards-title', onclick: () => onToggle(key) },
+        lines.map((text, i) => h('div', {}, i === 0 ? `${arrow} ${text}` : text)));
+}
+
+/** A section: its title (collapsible), then one column of cards per side below it, unless collapsed. */
+const section = (key, title, meCards, botCards, collapsed, onToggle) => {
+    const head = sectionTitle(key, title, collapsed, onToggle);
+    return collapsed[key] ? [head] : [head, pileCol(meCards), pileCol(botCards, true)];
+};
 
 /** Both players' cards side by side, so the same pile is easy to compare between them. */
-export function cardsPanel(view, me, botSeat, { open = false } = {}) {
+export function cardsPanel(view, me, botSeat, { open = false, collapsed = {}, onToggle = () => {} } = {}) {
     const pMe = view.players[me];
     const pBot = view.players[botSeat];
     return h('details', { class: 'info cards-panel', open: open || null },
@@ -85,12 +96,13 @@ export function cardsPanel(view, me, botSeat, { open = false } = {}) {
         h('div', { class: 'cards-grid' },
             h('div', { class: 'cards-head' }, sideName(me), h('div', {}, `(${t('cmp.you')})`)),
             h('div', { class: 'cards-head right' }, sideName(botSeat), h('div', {}, `(${t('cmp.bot')})`)),
-            h('div', { class: 'cards-title' }, h('div', {}, t('cmp.deck.handDeck')), h('div', {}, t('cmp.deck.play'))),
-            h('div', { class: 'cards-col' }, `${pMe.deckCount} / ${pMe.handCount}`),
-            h('div', { class: 'cards-col right' }, `${pBot.deckCount} / ${pBot.handCount}`),
-            pileCol(pMe.play), pileCol(pBot.play, true),
-            section(t('cmp.deck.discard'), pMe.discard, pBot.discard),
-            section(t('cmp.deck.supply'), pMe.supply, pBot.supply),
-            section(t('cmp.deck.removed'), pMe.removed ?? [], pBot.removed ?? [])));
+            sectionTitle('handDeck', [t('cmp.deck.handDeck'), t('cmp.deck.play')], collapsed, onToggle),
+            ...(collapsed.handDeck ? [] : [
+                h('div', { class: 'cards-col' }, `${pMe.deckCount} / ${pMe.handCount}`),
+                h('div', { class: 'cards-col right' }, `${pBot.deckCount} / ${pBot.handCount}`),
+                pileCol(pMe.play), pileCol(pBot.play, true)]),
+            section('discard', t('cmp.deck.discard'), pMe.discard, pBot.discard, collapsed, onToggle),
+            section('supply', t('cmp.deck.supply'), pMe.supply, pBot.supply, collapsed, onToggle),
+            section('removed', t('cmp.deck.removed'), pMe.removed ?? [], pBot.removed ?? [], collapsed, onToggle)));
 }
 
