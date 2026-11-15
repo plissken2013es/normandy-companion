@@ -46,7 +46,20 @@ function terrainOf(tileId, cover) {
 let clipIds = 0;
 // loaded once at the start, so the first map does not show up empty
 if (typeof Image !== 'undefined') for (const [cls, n] of Object.entries(TERRAIN)) for (let i = 1; i <= n; i++) new Image().src = `assets/terrain/${cls}-${i}.png`;
+/** A five-pointed star centred on (cx, cy), `r` from the centre to a point, the top one up. */
+function starPath(cx, cy, r) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const k = i % 2 ? r * 0.42 : r;
+        pts.push(`${(cx + k * Math.cos(a)).toFixed(2)} ${(cy + k * Math.sin(a)).toFixed(2)}`);
+    }
+    return `M${pts.join(' L')} Z`;
+}
 export const coverText = (c) => (c === 'hill' ? '3/1' : String(c));
+
+/** A scenario's spawn `who` (data/scenarios) for the Sniper and the Mortar: their kind, for unit.short.* */
+const WHO_SHORT = { sniper: 'SN', mortar: 'MO' };
 
 /** Short label of a counter: "FUS A", "MORT". */
 export function shortName(uid) {
@@ -93,17 +106,32 @@ export function drawMap(view, { picks = new Map(), onPick = () => {}, viewer, fo
         for (const side of SIDES) {
             const c = view.control[tile.id][side];
             if (!c) continue;
+            // the side's colour all round and a white shape drawn here, not a font's ★ or ◉: the same on every device
             g.append(s('g', { class: `cmark ${side} ${c}` },
                 s('circle', { cx: mx, cy: 16, r: 9.5 }),
-                s('text', { x: mx, y: 20 }, c === 'controlled' ? '★' : '◉')));
+                c === 'controlled' ? s('path', { d: starPath(mx, 16, 6.8), class: 'cmark-in' }) : s('circle', { cx: mx, cy: 16, r: 4, class: 'cmark-in' })));
             mx += 22;
         }
-        for (const sp of spawnsAt[tile.id] ?? []) {
-            const label = sp.who.map((w) => (w.length === 1 ? w : t(`spawn.${w}`))).join(' ');
-            const w = 8 + label.length * 5.6;
-            g.append(s('rect', { x: mx - 4, y: 4, width: w, height: 15, rx: 3, class: `cspawn ${sp.side}` }));
-            g.append(s('text', { x: mx - 4 + w / 2, y: 15, class: 'cspawn-t' }, label));
-            mx += w + 2;
+        // the spawn labels, centred on the tile between the control markers and the objective's flag (or the
+        // tile's edge): squads by their letter, the Sniper and the Mortar as on their counters ("C SNI MOR"); too
+        // long for that room, squeezed into it on one line (a second one would run into the counters)
+        const spawns = (spawnsAt[tile.id] ?? []).map((sp) => {
+            const label = sp.who.map((w) => (w.length === 1 ? w : WHO_SHORT[w] ? t(`unit.short.${WHO_SHORT[w]}`) : t(`spawn.${w}`))).join(' ');
+            return { ...sp, label, natural: 8 + label.length * 5.6 };
+        });
+        if (spawns.length) {
+            const [left, right] = [mx - 4, val ? T - 32 : T - 4];
+            const gap = 2;
+            const total = spawns.reduce((n, x) => n + x.natural, 0) + gap * (spawns.length - 1);
+            const k = Math.min(1, (right - left - gap * (spawns.length - 1)) / (total - gap * (spawns.length - 1)));
+            const width = total - (1 - k) * (total - gap * (spawns.length - 1));
+            let x = Math.min(Math.max(T / 2 - width / 2, left), right - width);
+            for (const sp of spawns) {
+                const w = sp.natural * k;
+                g.append(s('rect', { x, y: 4, width: w, height: 15, rx: 3, class: `cspawn ${sp.side}` }));
+                g.append(s('text', { x: x + w / 2, y: 15, class: 'cspawn-t', ...(k < 1 ? { textLength: w - 6, lengthAdjust: 'spacingAndGlyphs' } : {}) }, sp.label));
+                x += w + gap;
+            }
         }
         if (sc.radio === tile.id) g.append(s('text', { x: T - 44, y: 19, class: 'radio' }, '📡'));
         view.targets.forEach((tt, seat) => {
