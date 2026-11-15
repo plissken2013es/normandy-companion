@@ -130,7 +130,7 @@ export function guideSteps(entries, me, before, after) {
                 break;
             case 'casualty':
                 if (e.seat === me) push({ ...casualtyText(e, un), focus: { unit: e.unit }, kind: 'cards', mine: lastAttack?.seat === me, op: { move: [e.from, 'removed'] } });
-                else push({ text: t('cmp.g.casualtyBot', { unit: un(e.unit) }), focus: { unit: e.unit }, kind: 'info', mine: lastAttack?.seat === me });
+                else push({ text: t('cmp.g.casualtyBot', { unit: un(e.unit), from: t(`log.from.${e.from}`) }), focus: { unit: e.unit }, kind: 'info', mine: lastAttack?.seat === me });
                 break;
             case 'eliminated':
                 push({ text: t(e.seat === me ? 'cmp.g.eliminatedYou' : 'cmp.g.eliminatedBot', { unit: un(e.unit) }), focus: { unit: e.unit }, kind: 'table', mine: lastAttack?.seat === me });
