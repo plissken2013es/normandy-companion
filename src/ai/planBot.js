@@ -5,13 +5,14 @@
 // one turn, scouting before advancing, a Rally that frees a card for later.
 //
 // Dice and draws are not simulated: an Attack, Suppress, Blast, Command or Recon is played "on paper" (the card goes
-// to the play area, the unit comes in if it was off the board) and counts what the heuristic bot thinks it is worth.
-// Everything else (moves, scouting, Control, Bolster, Inspire, Guide, aiming the mortar) runs through the real rules.
+// to the play area, the unit comes in if it was off the board) and counts what the heuristic bot thinks it is worth
+// (for Command and Recon, what the cards of its deck are worth: `drawValue`). Everything else (moves, scouting,
+// Control, Bolster, Inspire, Guide, aiming the mortar) runs through the real rules.
 //
 // The position is judged by the heuristic bot's own measures (points, where each unit stands, the cards it owns),
 // less the risk to Riflemen standing under fire, but not when the enemy wins by pinning and one Control would win the
-// game: then the one way to win is to get there fast (`racing`, docs/02 §5.2). Sub-decisions follow the plan; anything it did not plan (an Attack's target,
-// the bid) is left to the heuristic bot.
+// game: then the one way to win is to get there fast (`racing`, docs/02 §5.2). Sub-decisions follow the plan;
+// anything it did not plan (an Attack's target, the bid) is left to the heuristic bot.
 
 import { GameEnd } from '../engine/ask.js';
 import { SIDES, TYPES, scenarioById, typeId, typeOf, unitOfCard, unitType } from '../engine/data.js';
@@ -19,7 +20,7 @@ import { seedFrom } from '../engine/rng.js';
 import { paradropOdds, paradropSide, points, spawn, spawnTile } from '../engine/state.js';
 import { playerTurn } from '../engine/turn.js';
 import { view as viewOf } from '../engine/view.js';
-import { bolsterOf, context, exposure, heuristicBot, kindOf, placeWeight, scorePlay, tileValue } from './heuristicBot.js';
+import { bolsterOf, keepOf, context, exposure, heuristicBot, kindOf, placeWeight, scorePlay, tileValue } from './heuristicBot.js';
 
 /** Actions whose result depends on dice or draws: played on paper, valued by the heuristic. */
 const CHANCE = new Set(['attack', 'suppress', 'blast', 'command', 'recon']);
@@ -142,8 +143,9 @@ function replay(g0, seat, line) {
  * in two turns; only for a side that wins by pinning, which has nothing else to do with an objective). There, our
  * nearest other counter adds `holdRoute` of that / (1 + its distance to it): the lone German Machine Gunners on 18A
  * of scenario 16 fell and no German counter could step in, as Germany had no marker on the way (the user's game,
- * docs/02 §5.2); now its Scouts explore towards it. Tried without effect: a second counter on it (×0.3), and steps
- * onto a tile without our marker counting double. `enemyFog`:
+ * docs/02 §5.2); now its Scouts explore towards it. It does not win more games (the audit of 2026-11-15, §5.8: 54 %
+ * without it in scenario 16, in the noise) but stays for that game. Tried without effect: a second counter on it
+ * (×0.3), and steps onto a tile without our marker counting double. `enemyFog`:
  * each Fog of War in the enemy's deck, hand and discard pile (what Conceal gives them; without it Conceal looked like a wasted card).
  * `exposure` does not apply while racing (`racing`): heavier there (30), as losing Riflemen loses the game, it kept US
  * back in scenario 6, where it needs one Control 5 tiles away (docs/02 §5.2).
@@ -167,12 +169,13 @@ const startOf = (g, view, seat) => ({ goals: context(view, seat).goals, live: li
 const racing = (cx) => Boolean(cx.sc.win[cx.them].pin) && cx.goals.some(cx.winsAt);
 
 /**
- * Holding: with the Normandy rule a counter of ours on an objective we control stops the enemy taking it, so it is
- * worth its value times how close the enemy Riflemen are (one counter is enough; North Africa: no blocking). One whose
- * Control would win the game for the enemy is also worth a way for another counter to get there, should ours fall.
+ * Holding: a counter of ours on an objective we control stops the enemy taking it, so it is worth its value times how
+ * close the enemy Riflemen are (one counter is enough). So with the North Africa rule too, which only lets the enemy
+ * Control a tile with our counters on it while we do not control it: it was left out, and in Albert Gil's game of
+ * scenario 7 (BGG, 2026-11-15) Germany took 7A and walked away from it (docs/02 §5.3). One whose Control would win
+ * the game for the enemy is also worth a way for another counter to get there, should ours fall.
  */
 function holdValue(g, seat, cx) {
-    if (g.setup.controlRule === 'northAfrica') return 0;
     const w = WEIGHTS;
     const rifles = cx.foes.filter((f) => kindOf(f.id) === 'R');
     const need = cx.sc.win[cx.them].points;
@@ -265,7 +268,9 @@ function children(g, seat, req, pick) {
             return req.options.filter((o) => kindOf(o.unit) === 'R').map((o) => o.id).concat(req.options.filter((o) => kindOf(o.unit) !== 'R').map((o) => o.id)).slice(0, 3);
         case 'bolster':
         case 'inspire': {
-            const ranked = req.options.filter((o) => o.id !== 'done').map((o) => ({ id: o.id, s: bolsterOf(cx, TYPES[o.card].kind) ?? 1 })).sort((x, y) => y.s - x.s);
+            // as the heuristic bot ranks them: what to bring from the supply, what to take back to the hand
+            const weigh = req.kind === 'inspire' ? keepOf : bolsterOf;
+            const ranked = req.options.filter((o) => o.id !== 'done').map((o) => ({ id: o.id, s: weigh(cx, TYPES[o.card].kind) ?? 1 })).sort((x, y) => y.s - x.s);
             return ranked.slice(0, 2).map((x) => x.id);
         }
         default:

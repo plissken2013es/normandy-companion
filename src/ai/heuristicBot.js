@@ -1,6 +1,8 @@
 // Heuristic bot (docs/02 §6): greedy, one card at a time, seeing only its view. Riflemen walk the scouted tiles
 // towards the objectives it does not hold and take them; Scouts open the way; fire goes where the chance of a hit
-// times the value of the target is highest; Bolster brings in Riflemen first. It bids its least useful card.
+// times the value of the target is highest; Bolster brings in Riflemen first. It bids its least useful card. The cards
+// it cannot see yet count too: Command and Recon by what its deck holds, Recon also by what a Fog of War less in it
+// gives the hands to come (CARDS).
 
 import { boardOf } from '../engine/board.js';
 import { SIDES, TYPES, coverOf, tileCover, defenceOf, hitChance, scenarioById, typeId, typeOf, unitKind, unitType } from '../engine/data.js';
@@ -17,7 +19,7 @@ const BOLSTER_PIN = { R: 7, S: 5, M: 10, SN: 11, MO: 6, SL: 4, PG: 2, PS: 8 };
 // a siege (see STAGING): the Mortar, the one fire that finds only cover 1 on a hill, comes first (STAGING.mortar)
 export const bolsterOf = (cx, kind) => (kind === 'MO' && cx.siege ? STAGING.mortar : (cx.pinGame ? BOLSTER_PIN : BOLSTER)[kind]);
 // and it is not the card to bid or leave in the discard (STAGING.keep)
-const keepOf = (cx, kind) => (kind === 'MO' && cx.siege ? STAGING.keep : KEEP[kind]);
+export const keepOf = (cx, kind) => (kind === 'MO' && cx.siege ? STAGING.keep : KEEP[kind]);
 
 export const kindOf = (uid) => unitKind(unitType(uid));
 /** How much a better tile counts for a unit: a Rifleman's place matters more than anyone else's. */
@@ -36,9 +38,10 @@ export const GOAL = { blocked: 0.7, winning: 2.5, radioScore: 200, winOpen: 150,
 
 /**
  * A siege: every objective a side goes for has an enemy counter on it that stops its Control (Normandy rule), as
- * Germany's three hills in scenario 11 (the user's German game, docs/02 §5.2), or the enemy stops it on a hill
- * that alone wins the game, as the castle of scenario 13 (the user's third German game there). Its Riflemen, who cannot Control
- * yet, weigh how exposed a tile is (`expose` per expected hit: 8A or 3A, not the cover 1 tiles), and get nothing
+ * Germany's three hills in scenario 11 (the user's German game, docs/02 §5.2), or every objective that would win the
+ * game is blocked and one of them is a hill, as the castle of scenario 13 (the user's third German game there; until
+ * the audit of 2026-11-15 one such hill was enough, and US besieged one hill of scenario 9 with two other objectives
+ * free, any of which won: US won 24 % instead of 41 %, docs/02 §5.8). Its Riflemen, who cannot Control yet, weigh how exposed a tile is (`expose` per expected hit: 8A or 3A, not the cover 1 tiles), and get nothing
  * for standing on a blocked objective; the Mortar comes first in a Bolster (`mortar`), is kept like a Rifleman
  * rather than bid (`keep`; the user's coalition game of 13: it bid it 6 rounds of 17), stays where it can Blast
  * one, and aims at the enemies on it (`target` times their worth). Waiting further off (up to 2 tiles from the
@@ -92,8 +95,9 @@ export function context(view, seat) {
     // how soon one of our Riflemen could use a marker on a tile: 1.5 standing on it, 1 next to it, less further off
     const rifles = mine.filter((u) => kindOf(u.id) === 'R');
     const reach = (t) => (rifles.length ? 3 / (2 + Math.min(...rifles.map((u) => d(u.tile, t)))) : 1);
+    const winning = goals.filter((t) => wins(t, view.objectives[t]));
     const siege = goals.length > 0 && (goals.every(blocked)
-        || goals.some((t) => blocked(t) && wins(t, view.objectives[t]) && tileCover(t, sc.hills) === 'hill'));
+        || (winning.length > 0 && winning.every(blocked) && winning.some((t) => tileCover(t, sc.hills) === 'hill')));
     const winsAt = (t) => wins(t, view.objectives[t]);
     // a free objective: nobody controls it or has a marker on it, and no enemy counter stops our Control
     const free = (t) => Boolean(need) && Boolean(view.objectives[t]) && !marked(t) && !blocked(t) && !view.control[t][them];
@@ -288,7 +292,7 @@ export function scorePlay(cx, o) {
         case 'stalk':
             return moveScore(cx, o, uid, from);
         case 'recon':
-            return CARDS.command * drawValue(cx, 1) + CARDS.reconThin;
+            return CARDS.command * drawValue(cx, 1) + thinning(cx);
         case 'conceal':
             return view.players[1 - seat].supply.some((c) => typeId(c) === 'FOW') ? 12 : -1;
         case 'bolster': {
@@ -320,11 +324,34 @@ export function scorePlay(cx, o) {
  * Weights of the cards a turn brings that the bot cannot see yet (Albert Gil's games on BGG, 2026-11-15: the
  * Platoon Sergeant bolstered 122 times out of 124, at 18 a card Command was worth half a Bolster 3). `command`: a card
  * drawn with Command or Recon is worth that share of what the cards of the deck are worth played now (`drawValue`),
- * and Recon adds `reconThin` for the Fog of War it takes out of the deck for good (it was 38, whatever the deck).
+ * and Recon adds what the Fog of War it takes out of the deck for good gives the hands to come (`thinning`, over
+ * `reconDraws` cards drawn from now on; it was 38, whatever the deck, then 15).
  * `reconKeep`: in the bid, a Fog of War that a Scout in hand could Recon out of the deck is kept like that (KEEP) and
  * not bid (it bid the Fog of War every time and had none left to Recon). Against the bot before: 57.7 % (docs/02 §5.3).
  */
-export const CARDS = { command: 1, reconKeep: 5, reconThin: 15 };
+export const CARDS = { command: 1, reconKeep: 5, reconDraws: 16 };
+
+/** The bot's deck as { type: n }: all its cards (the scenario's deck and supply) less the ones it sees. */
+function deckOf(cx) {
+    const p = cx.view.players[cx.seat];
+    const { deck, supply } = cx.sc.cards[cx.me];
+    const left = {};
+    for (const pile of [deck, supply]) for (const [type, k] of Object.entries(pile)) left[type] = (left[type] ?? 0) + k;
+    for (const c of [...(p.hand ?? []), ...p.discard, ...p.play, ...p.supply, ...(p.removed ?? [])]) left[typeId(c)]--;
+    return left;
+}
+
+/** The mean best play of a pile of cards ({ type: n }), with or without its Fog of War (worth nothing). */
+function meanWorth(cx, pile, fog = true) {
+    let sum = 0;
+    let count = 0;
+    for (const [type, k] of Object.entries(pile)) {
+        if (k <= 0 || (!fog && TYPES[type].fog)) continue;
+        sum += k * cardWorth(cx, type);
+        count += k;
+    }
+    return count ? sum / count : 0;
+}
 
 /**
  * What one card drawn now is worth, on average: each card of the deck (what the bot knows it holds and does not see)
@@ -332,20 +359,26 @@ export const CARDS = { command: 1, reconKeep: 5, reconThin: 15 };
  */
 export function drawValue(cx, n = 1) {
     const p = cx.view.players[cx.seat];
-    const { deck, supply } = cx.sc.cards[cx.me];
-    const left = {};
-    for (const pile of [deck, supply]) for (const [type, k] of Object.entries(pile)) left[type] = (left[type] ?? 0) + k;
-    for (const c of [...(p.hand ?? []), ...p.discard, ...p.play, ...p.supply, ...(p.removed ?? [])]) left[typeId(c)]--;
+    const left = deckOf(cx);
     // a deck too short: the discard pile is shuffled into it
     if (p.deckCount < n) for (const c of p.discard) left[typeId(c)]++;
-    let sum = 0;
-    let count = 0;
-    for (const [type, k] of Object.entries(left)) {
-        if (k <= 0) continue;
-        sum += k * cardWorth(cx, type);
-        count += k;
-    }
-    return count ? sum / count : 0;
+    return meanWorth(cx, left);
+}
+
+/**
+ * What taking one Fog of War out of the cards the bot owns gives the hands to come: each of the next
+ * CARDS.reconDraws cards drawn is a playable one more often, by (N − F) / (N (N − 1)) with N cards and F Fog of War,
+ * worth what a playable card is worth now. Albert Gil's game of scenario 7 (BGG, 2026-11-15): Germany lost 16 cards,
+ * had 10 Fog of War in 18 and drew hands like three Fog of War and a Rifleman.
+ */
+function thinning(cx) {
+    const p = cx.view.players[cx.seat];
+    const pool = deckOf(cx);
+    for (const c of [...(p.hand ?? []), ...p.discard, ...p.play]) pool[typeId(c)] = (pool[typeId(c)] ?? 0) + 1;
+    const n = Object.values(pool).reduce((a, k) => a + Math.max(0, k), 0);
+    const fogs = Math.max(0, pool.FOW ?? 0);
+    if (n < 2) return 0;
+    return (CARDS.reconDraws * meanWorth(cx, pool, false) * (n - fogs)) / (n * (n - 1));
 }
 
 /** A card's best play now, roughly (no Command or Recon, Control only where it could be taken, Blast only with a target), at least 0. */
@@ -372,9 +405,8 @@ function cardWorth(cx, type) {
 function fogKeep(cx, hand) {
     const fogs = hand.filter((c) => typeOf(c).fog).length;
     const scouts = hand.filter((c) => {
-        const t = typeOf(c);
-        const u = t.unit && cx.view.units[`${cx.me}:${t.unit}`];
-        return t.actions.some((a) => a.a === 'recon') && !(u?.tile && u.suppressed);
+        const u = cx.view.units[unitOf(cx.seat, typeId(c))];
+        return typeOf(c).actions.some((a) => a.a === 'recon') && !(u?.tile && u.suppressed);
     }).length;
     return fogs <= scouts ? CARDS.reconKeep : KEEP.FOW;
 }
@@ -467,7 +499,7 @@ export function heuristicBot(seed) {
             case 'guide':
                 return pick(req.options, (o) => {
                     const u = view.units[o.unit];
-                    return (bestReach(cx, u.id, u.tile, 1, 'move').v - tileValue(cx, u.id, u.tile)) * (kindOf(u.id) === 'R' ? 2 : 1);
+                    return (bestReach(cx, u.id, u.tile, 1, 'move').v - tileValue(cx, u.id, u.tile)) * placeWeight(u.id);
                 });
             case 'attack':
             case 'suppress':
