@@ -43,6 +43,10 @@ export default {
         s10: 'Spionaggio difficile',
         s11: 'Collina 314',
         s12: 'Mortain',
+        s13: 'Il castello di Itter',
+        s14: 'Gufi notturni',
+        s15: 'In trappola',
+        s16: 'Il ponte di La Fière',
     },
 
     texts: {

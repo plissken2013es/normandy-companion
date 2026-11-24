@@ -168,27 +168,32 @@ const posOf = (cx, uid) => cx.view.units[uid]?.tile;
 
 /**
  * What an enemy Rifleman could Control next turn: an objective its side does not hold that it stands on, or one
- * step from on a tile its side has a marker on (it can move there). Weighs the most valuable one, four times over
- * if it would reach the enemy's points to win. Standing on a tile its side already controls threatens nothing: the
- * control stays whether the unit does or not. Except the radio of scenario 10 [D-31]: on it, or one step from it,
- * a US Rifleman whose side holds it adds a point with every Control.
+ * step from on a tile its side has a marker on (it can move there), with what it would gain and whether that wins
+ * the game. Standing on a tile its side already controls gains nothing: the control stays whether the unit does or
+ * not. Except the radio of scenario 10 [D-31]: on it, or one step from it, a US Rifleman whose side holds it adds a
+ * point with every Control (`radio`).
  */
-function threat(cx, uid, winningOnly = false) {
+export function* nextControls(cx, uid) {
     const { view, them, d } = cx;
     const at = posOf(cx, uid);
     const need = cx.sc.win[them].points;
-    const have = cx.theirs;
-    let best = 0;
-    for (const [t, val] of Object.entries(view.objectives)) {
-        const held = view.control[t][them] === 'controlled';
-        const radio = held && them === 'us' && cx.sc.radio === t;
+    for (const [tile, val] of Object.entries(view.objectives)) {
+        const held = view.control[tile][them] === 'controlled';
+        const radio = held && them === 'us' && cx.sc.radio === tile;
         if (!val || (held && !radio)) continue;
-        const dist = d(at, t);
-        if (dist > 1 || (dist === 1 && !view.control[t][them])) continue;
+        const dist = d(at, tile);
+        if (dist > 1 || (dist === 1 && !view.control[tile][them])) continue;
         const gain = radio ? 1 : val;
-        const wins = need && have + gain >= need;
-        if (winningOnly && !wins) continue;
-        best = Math.max(best, gain * (dist === 0 ? 1.5 : 1) * (wins ? 4 : 1));
+        yield { tile, dist, gain, radio, wins: Boolean(need) && cx.theirs + gain >= need };
+    }
+}
+
+/** How much an enemy Rifleman threatens (`nextControls`): the most valuable Control, four times over if it wins. */
+function threat(cx, uid, winningOnly = false) {
+    let best = 0;
+    for (const c of nextControls(cx, uid)) {
+        if (winningOnly && !c.wins) continue;
+        best = Math.max(best, c.gain * (c.dist === 0 ? 1.5 : 1) * (c.wins ? 4 : 1));
     }
     return best;
 }

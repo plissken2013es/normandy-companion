@@ -20,7 +20,7 @@ import { seedFrom } from '../engine/rng.js';
 import { paradropOdds, paradropSide, points, spawn, spawnTile } from '../engine/state.js';
 import { playerTurn } from '../engine/turn.js';
 import { view as viewOf } from '../engine/view.js';
-import { bolsterOf, keepOf, context, exposure, heuristicBot, kindOf, placeWeight, scorePlay, tileValue } from './heuristicBot.js';
+import { bolsterOf, keepOf, context, exposure, heuristicBot, kindOf, nextControls, placeWeight, scorePlay, tileValue } from './heuristicBot.js';
 
 /** Actions whose result depends on dice or draws: played on paper, valued by the heuristic. */
 const CHANCE = new Set(['attack', 'suppress', 'blast', 'command', 'recon']);
@@ -149,9 +149,11 @@ function replay(g0, seat, line) {
  * (×0.3), and steps onto a tile without our marker counting double. `enemyFog`:
  * each Fog of War in the enemy's deck, hand and discard pile (what Conceal gives them; without it Conceal looked like a wasted card).
  * `exposure` does not apply while racing (`racing`): heavier there (30), as losing Riflemen loses the game, it kept US
- * back in scenario 6, where it needs one Control 5 tiles away (docs/02 §5.2).
+ * back in scenario 6, where it needs one Control 5 tiles away (docs/02 §5.2); at 3 to 12 it won no more games either
+ * (the user's US game of scenario 2). `block`: a counter of ours on an objective whose Control would win the enemy
+ * the game next turn is worth `hold` × its value that many times over (`blockValue`).
  */
-export const WEIGHTS = { points: 130, exposure: 12, enemyFog: 8, goalMarker: 20, hold: 70, holdWin: 5, holdFar: 5, holdRoute: 1 };
+export const WEIGHTS = { points: 130, exposure: 12, enemyFog: 8, goalMarker: 20, hold: 70, holdWin: 5, holdFar: 5, holdRoute: 1, block: 5 };
 
 /** Every card a player still owns, wherever it is. */
 const owned = (p) => [...p.deck, ...p.hand, ...p.discard, ...p.play];
@@ -193,6 +195,22 @@ function holdValue(g, seat, cx) {
             v += (on ? hold : 0) + hold * w.holdRoute / (1 + spare);
         } else if (on && near <= 2) v += w.hold * val / (1 + near);
     }
+    return v;
+}
+
+/**
+ * Blocking: an objective whose Control would win the enemy the game next turn (`nextControls` of an enemy
+ * Rifleman). A counter of ours standing there stops that Control [D-23] (not under the North Africa rule, which only
+ * stops it on a tile we control, as holdValue counts). The user's German game of scenario 1 (docs/02 §5.2): a German
+ * Rifleman reached 13B in round 1, one Control from the 5 points, and US shot at it for two turns (2 hits of 7, and
+ * Germany bolstered it back) while either US Scout could have scouted onto 13B; Germany won in round 3.
+ */
+function blockValue(g, cx) {
+    if (cx.view.controlRule === 'northAfrica') return 0;
+    const tiles = new Set();
+    for (const f of cx.foes) if (kindOf(f.id) === 'R') for (const c of nextControls(cx, f.id)) if (c.wins && !c.radio) tiles.add(c.tile);
+    let v = 0;
+    for (const t of tiles) if (cx.mine.some((u) => u.tile === t)) v += WEIGHTS.hold * g.objectives[t] * WEIGHTS.block;
     return v;
 }
 
@@ -242,7 +260,7 @@ function evaluate(g, seat, start = null) {
         v += 6;
         if (g.objectives[t] && g.control[t][cx.me] !== 'controlled') v += w.goalMarker * cx.worth(t) * cx.reach(t);
     }
-    return v + holdValue(g, seat, cx);
+    return v + holdValue(g, seat, cx) + blockValue(g, cx);
 }
 
 /** The answers worth trying for a request met while planning, best first by the heuristic's own measure. */

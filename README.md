@@ -13,7 +13,7 @@ game**. The app plays the other side; you play yours with your cards, tiles, cou
   (13 to 16: *Castle Itter*, *Night Owls*, *Entrapment* and *The Bridge at La Fière*), set up with their free sheets.
   Spanish and English, and more languages are welcome: see [Translating the companion](#translating-the-companion).
 
-**Beta (0.5.0-beta).** Play it at https://plissken2013es.github.io/normandy-companion/, and tell us what goes wrong: open an
+**Beta (0.5.1-beta).** Play it at https://plissken2013es.github.io/normandy-companion/, and tell us what goes wrong: open an
 [issue](https://github.com/plissken2013es/normandy-companion/issues) (with the game code from ☰ → Code, if you can) or use *Report a bug* in the app.
 
 ## Play locally
