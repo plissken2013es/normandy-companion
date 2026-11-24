@@ -173,7 +173,7 @@ const posOf = (cx, uid) => cx.view.units[uid]?.tile;
  * control stays whether the unit does or not. Except the radio of scenario 10 [D-31]: on it, or one step from it,
  * a US Rifleman whose side holds it adds a point with every Control.
  */
-function threat(cx, uid) {
+function threat(cx, uid, winningOnly = false) {
     const { view, them, d } = cx;
     const at = posOf(cx, uid);
     const need = cx.sc.win[them].points;
@@ -186,9 +186,37 @@ function threat(cx, uid) {
         const dist = d(at, t);
         if (dist > 1 || (dist === 1 && !view.control[t][them])) continue;
         const gain = radio ? 1 : val;
-        best = Math.max(best, gain * (dist === 0 ? 1.5 : 1) * (need && have + gain >= need ? 4 : 1));
+        const wins = need && have + gain >= need;
+        if (winningOnly && !wins) continue;
+        best = Math.max(best, gain * (dist === 0 ? 1.5 : 1) * (wins ? 4 : 1));
     }
     return best;
+}
+
+/** How many cards an enemy unit has left outside the supply (hand, deck, discard, play): public, as casualties are announced. */
+function cardsLeft(cx, uid) {
+    const type = unitType(uid);
+    const enemy = 1 - cx.seat;
+    const { deck, supply } = cx.sc.cards[cx.them];
+    let n = (deck[type] ?? 0) + (supply[type] ?? 0) - cx.view.players[enemy].supply.filter((c) => typeId(c) === type).length;
+    for (const e of cx.view.log ?? []) if (e.k === 'casualty' && e.seat === enemy && e.unit === uid) n--;
+    return n;
+}
+
+/**
+ * What a Suppress is worth against a hit (`targetValue`): `base`, half, as a rule. A suppressed unit's next card
+ * only rallies it, so on an enemy Rifleman one Control from winning the game it stops that Control, while a hit only
+ * takes one of its cards; with two or more left it Controls all the same. There it is worth `stop` of a hit. The
+ * user's German game of scenario 12 (docs/02 §5.2): the US Machine Gunners fired Attack 2 (19 % on the hill) at the
+ * German Rifleman on 3A, two cards left, not Suppress 4 (34 %), and it Controlled the last points the next round.
+ */
+export const SUPPRESS = { base: 0.5, stop: 1 };
+
+function fireValue(cx, uid, action) {
+    const v = targetValue(cx, uid);
+    if (action !== 'suppress') return v;
+    const stops = kindOf(uid) === 'R' && threat(cx, uid, true) > 0 && cardsLeft(cx, uid) >= 2;
+    return v * (stops ? SUPPRESS.stop : SUPPRESS.base);
 }
 
 /**
@@ -238,7 +266,7 @@ function fireScore(cx, o, tile) {
     for (const f of cx.foes) {
         if (o.action === 'suppress' && f.suppressed) continue;
         const total = defenceOf(f.id) + coverOf(f.tile, { fromTile: tile, hills: cx.sc.hills }) + cx.d(tile, f.tile);
-        const s = hitChance(total, o.value) * targetValue(cx, f.id) * (o.action === 'suppress' ? 0.5 : 1);
+        const s = hitChance(total, o.value) * fireValue(cx, f.id, o.action);
         best = Math.max(best, s);
     }
     return best;
@@ -503,7 +531,7 @@ export function heuristicBot(seed) {
                 });
             case 'attack':
             case 'suppress':
-                return pick(req.options, (o) => hitChance(o.total, o.dice) * targetValue(cx, o.unit));
+                return pick(req.options, (o) => hitChance(o.total, o.dice) * fireValue(cx, o.unit, req.kind));
             case 'target': {
                 const best = bestTarget(cx, req.unit);
                 return pick(req.options, (o) => (o.tile === best.tile ? 100 : -cx.d(o.tile, best.tile ?? o.tile)));

@@ -1,0 +1,252 @@
+{
+ "id": 13,
+ "initiative": "us",
+ "tiles": [
+  {
+   "id": "15A",
+   "x": 2,
+   "y": 0,
+   "rot": 180
+  },
+  {
+   "id": "13A",
+   "x": 4,
+   "y": 0
+  },
+  {
+   "id": "14A",
+   "x": 6,
+   "y": 0
+  },
+  {
+   "id": "5A",
+   "x": 1,
+   "y": 2
+  },
+  {
+   "id": "4A",
+   "x": 3,
+   "y": 2
+  },
+  {
+   "id": "3A",
+   "x": 5,
+   "y": 2
+  },
+  {
+   "id": "7A",
+   "x": 0,
+   "y": 4
+  },
+  {
+   "id": "17B",
+   "x": 2,
+   "y": 4
+  },
+  {
+   "id": "16A",
+   "x": 4,
+   "y": 4
+  },
+  {
+   "id": "2A",
+   "x": 6,
+   "y": 4
+  },
+  {
+   "id": "18B",
+   "x": 1,
+   "y": 6
+  },
+  {
+   "id": "9A",
+   "x": 3,
+   "y": 6
+  },
+  {
+   "id": "1B",
+   "x": 5,
+   "y": 6
+  },
+  {
+   "id": "11B",
+   "x": 2,
+   "y": 8
+  },
+  {
+   "id": "10A",
+   "x": 4,
+   "y": 8
+  },
+  {
+   "id": "8B",
+   "x": 1,
+   "y": 10
+  },
+  {
+   "id": "12A",
+   "x": 3,
+   "y": 10
+  }
+ ],
+ "objectives": {
+  "16A": 1,
+  "2A": 1,
+  "9A": 1,
+  "1B": 3
+ },
+ "control": {
+  "16A": {
+   "us": "controlled"
+  },
+  "2A": {
+   "us": "controlled"
+  },
+  "9A": {
+   "us": "controlled"
+  },
+  "1B": {
+   "us": "controlled"
+  },
+  "15A": {
+   "de": "scouted"
+  },
+  "4A": {
+   "de": "scouted"
+  },
+  "7A": {
+   "de": "scouted"
+  },
+  "17B": {
+   "de": "scouted"
+  },
+  "11B": {
+   "de": "scouted"
+  },
+  "8B": {
+   "de": "scouted"
+  }
+ },
+ "spawns": {
+  "us": [
+   {
+    "tile": "1B",
+    "who": [
+     "all"
+    ]
+   }
+  ],
+  "de": [
+   {
+    "tile": "8B",
+    "who": [
+     "A"
+    ]
+   },
+   {
+    "tile": "7A",
+    "who": [
+     "B"
+    ]
+   },
+   {
+    "tile": "15A",
+    "who": [
+     "sniper",
+     "mortar"
+    ]
+   }
+  ]
+ },
+ "units": {
+  "us": {
+   "RA": "1B",
+   "SA": "1B",
+   "MA": "1B",
+   "RC": "1B",
+   "SC": "1B"
+  },
+  "de": {
+   "RA": "8B",
+   "MA": "8B",
+   "SA": "8B",
+   "RB": "7A",
+   "MB": "7A",
+   "SB": "7A"
+  }
+ },
+ "hills": [
+  "1B"
+ ],
+ "coalition": {
+  "side": "us",
+  "squad": "C"
+ },
+ "sides": {
+  "us": {
+   "en": "Coalition",
+   "es": "Coalición"
+  }
+ },
+ "cards": {
+  "us": {
+   "deck": {
+    "PS": 1,
+    "SLA": 1,
+    "RA": 2,
+    "SA": 1,
+    "MA": 1,
+    "FOW": 2,
+    "SLC": 1,
+    "RC": 2,
+    "SC": 1
+   },
+   "supply": {
+    "RA": 3,
+    "SA": 2,
+    "MA": 2,
+    "FOW": 8,
+    "RC": 3,
+    "SC": 2
+   }
+  },
+  "de": {
+   "deck": {
+    "PS": 1,
+    "SLA": 1,
+    "SLB": 1,
+    "RA": 2,
+    "RB": 2,
+    "SA": 1,
+    "SB": 1,
+    "MA": 1,
+    "MB": 1,
+    "FOW": 2
+   },
+   "supply": {
+    "RA": 3,
+    "RB": 3,
+    "SA": 2,
+    "SB": 2,
+    "MA": 2,
+    "MB": 2,
+    "MO": 3,
+    "SN": 3,
+    "FOW": 8
+   }
+  }
+ },
+ "win": {
+  "us": {
+   "pin": true
+  },
+  "de": {
+   "points": 3
+  }
+ },
+ "bothPinned": false,
+ "title": {
+  "en": "Castle Itter",
+  "es": "El castillo de Itter"
+ }
+}

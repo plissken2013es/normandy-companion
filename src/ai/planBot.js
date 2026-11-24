@@ -69,7 +69,8 @@ export function determinize(view, seat) {
         control: structuredClone(view.control),
         objectives: { ...view.objectives },
         targets: [...view.targets],
-        log: [],
+        // only the casualties, for the cards each enemy unit has left (`cardsLeft` in the heuristic)
+        log: (view.log ?? []).filter((e) => e.k === 'casualty'),
         notes: [[], []],
         result: null,
         pending: null,

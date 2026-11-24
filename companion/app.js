@@ -8,7 +8,7 @@ import { SCENARIOS } from '../src/engine/data.js';
 import { createState, normalizeSetup } from '../src/engine/state.js';
 import { view } from '../src/engine/view.js';
 import { decodeRecord, replayRecord } from '../src/engine/session.js';
-import { sideName } from '../src/ui/text.js';
+import { sideName, unitName, useScenario } from '../src/ui/text.js';
 import { drawMap } from './map.js';
 import { CARD_VIEWS, cardList, cardsChoice } from './cards.js';
 import { CompanionView, loadSaved } from './play.js';
@@ -55,7 +55,15 @@ function setupScreen() {
     const info = h('div', { class: 'scen-info' });
     const showInfo = () => {
         const sc = SCENARIOS.find((x) => x.id === scenario);
+        useScenario(sc); // the side names (the Coalition of scenario 13)
+        for (const o of sideSel.options) o.textContent = sideName(Number(o.value));
         const preview = view(createState(normalizeSetup({ scenario })), side);
+        // scenario 16: the units that start by paradrop land when the game starts, not on this map
+        const drop = sc.paradrop ? sc.paradrop.start.map((type) => `${sc.paradrop.side}:${type}`) : [];
+        for (const e of preview.log.filter((x) => x.k === 'paradrop')) {
+            preview.units[e.unit].tile = null;
+            if (e.marked) preview.control[e.tile][SIDES[e.seat]] = null;
+        }
         const cards = sc.cards[SIDES[side]];
         info.replaceChildren(
             h('div', { class: 'scen-text' },
@@ -64,7 +72,9 @@ function setupScreen() {
                 h('h4', {}, t('cmp.goal.title')),
                 h('ul', {}, [0, 1].map((s) => h('li', {}, h('b', {}, `${sideName(s)}${s === side ? ` (${t('cmp.you')})` : ''}: `), goals(sc, s)))),
                 sc.bothPinned ? h('p', { class: 'small muted' }, t('cmp.goal.bothPinned')) : null,
-                h('p', {}, t('cmp.setup.mount', { n: sc.id })),
+                h('p', {}, t(sc.id > 12 ? 'cmp.setup.mountPromo' : 'cmp.setup.mount', { n: sc.id })),
+                drop.length ? h('p', {}, t('cmp.setup.paradrop', { units: drop.map((u) => unitName(u, side)).join(', ') })) : null,
+                sc.coalition ? h('p', {}, t('cmp.setup.coalition', { side: sideName(SIDES.indexOf(sc.coalition.side)) })) : null,
                 h('h4', {}, t('cmp.setup.yourCards', { side: sideName(side) })),
                 h('p', { class: 'small' }, t('cmp.setup.deck', { cards: cardList(cards.deck) })),
                 h('p', { class: 'small' }, t('cmp.setup.supply', { cards: cardList(cards.supply) })),

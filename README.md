@@ -9,10 +9,11 @@ game**. The app plays the other side; you play yours with your cards, tiles, cou
   whether you hit. Its own dice roll on screen (or you roll them on the table).
 - After each of your answers it tells you, step by step, what the computer does on the table, with a map of its own
   (the tiles by their numbers, the cover, the objectives and the markers).
-- Scenarios 1 to 12 of the scenario book; set them up with your book. Spanish and English, and more languages are
-  welcome: see [Translating the companion](#translating-the-companion).
+- Scenarios 1 to 12 of the scenario book, set up with your book, and the four promotional scenarios of Osprey Games
+  (13 to 16: *Castle Itter*, *Night Owls*, *Entrapment* and *The Bridge at La Fière*), set up with their free sheets.
+  Spanish and English, and more languages are welcome: see [Translating the companion](#translating-the-companion).
 
-**Beta (0.4.4-beta).** Play it at https://plissken2013es.github.io/normandy-companion/, and tell us what goes wrong: open an
+**Beta (0.5.0-beta).** Play it at https://plissken2013es.github.io/normandy-companion/, and tell us what goes wrong: open an
 [issue](https://github.com/plissken2013es/normandy-companion/issues) (with the game code from ☰ → Code, if you can) or use *Report a bug* in the app.
 
 ## Play locally

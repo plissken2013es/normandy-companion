@@ -7,7 +7,7 @@
 
 import { s } from '../src/ui/dom.js';
 import { t } from '../src/i18n/index.js';
-import { TILES, defenceOf, scenarioById, unitKind, unitType } from '../src/engine/data.js';
+import { defenceOf, scenarioById, tileCover, unitKind, unitType } from '../src/engine/data.js';
 import { unitName } from '../src/ui/text.js';
 
 const T = 120; // tile side in SVG units
@@ -86,7 +86,7 @@ export function drawMap(view, { picks = new Map(), onPick = () => {}, viewer, fo
 
     for (const tile of sc.tiles) {
         const [x, y] = pos(tile.id);
-        const cover = TILES[tile.id].cover;
+        const cover = tileCover(tile.id, sc.hills); // the castle of scenario 13 is a hill there
         const pick = picks.get(`tile:${tile.id}`);
         const g = s('g', { transform: `translate(${x} ${y})`, class: `ctile ${coverClass(cover)}${pick ? ' pickable' : ''}${focusTiles.has(tile.id) ? ' focus' : ''}`,
             'data-pick': pick, onclick: pick ? () => onPick(pick) : null });

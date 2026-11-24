@@ -61,9 +61,14 @@ export function guideSteps(entries, me, before, after) {
                 push({ text: t(mine ? 'cmp.g.rallyYou' : 'cmp.g.rallyBot', { unit: un(e.unit) }), focus: { unit: e.unit }, kind: 'table', mine, head: mine ? null : t('cmp.g.botTurn') });
                 break;
             case 'spawn':
-            case 'paradrop': // scenario 16 (not in the companion yet): where the dice landed it
                 push({ text: t(mine ? 'cmp.g.spawnYou' : 'cmp.g.spawnBot', { unit: un(e.unit), tile: e.tile }), focus: { unit: e.unit, tile: e.tile }, kind: 'table', mine });
                 break;
+            case 'paradrop': { // scenario 16: the app rolls the drop for both sides, until the sum is a tile (0 counts 10)
+                const rolls = e.rolls.map((r) => r.map((d) => d || 10).join(' + ')).join('; ');
+                const marker = e.marked ? ` ${t('cmp.g.paradropMarker', { side: sideName(e.seat), tile: e.tile })}` : '';
+                push({ text: t(mine ? 'cmp.g.paradropYou' : 'cmp.g.paradropBot', { unit: un(e.unit), tile: e.tile, rolls }) + marker, focus: { unit: e.unit, tile: e.tile }, kind: 'table', mine });
+                break;
+            }
             case 'move': {
                 if (mine) break; // the player has moved it
                 // the steps of one counter make one move; the tiles it scouts on the way come after it

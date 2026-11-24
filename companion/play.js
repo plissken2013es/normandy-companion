@@ -12,9 +12,9 @@ import { Session, makeRecord, encodeRecord } from '../src/engine/session.js';
 import { CONTACT, bugMail, appKind } from './contact.js';
 import { createState, withoutRoundLimit } from '../src/engine/state.js';
 import { view as viewOf } from '../src/engine/view.js';
-import { TILES, hitChance, scenarioById, unitType } from '../src/engine/data.js';
+import { hitChance, scenarioById, tileCover, unitType } from '../src/engine/data.js';
 import { computerBot } from '../src/ai/computerBot.js';
-import { actionName, cardLabel, cardName, logLine, resultText, sideName, unitName } from '../src/ui/text.js';
+import { actionName, cardLabel, cardName, logLine, resultText, sideName, unitName, useScenario } from '../src/ui/text.js';
 import { diceTray } from '../src/ui/combat.js';
 import { sfx, loadSamples } from '../src/ui/sound.js';
 import { BoardZoom } from '../src/ui/zoom.js';
@@ -63,6 +63,7 @@ export class CompanionView {
         this.me = this.session.setup.external;
         this.botSeat = 1 - this.me;
         this.sc = scenarioById(this.session.setup.scenario);
+        useScenario(this.sc); // the side names (the Coalition of scenario 13)
         this.bot = computerBot(this.sc.id, this.botSeat, `${this.session.setup.seed}:bot`);
         this.marks = game.marks ?? []; // answers.length before each of the player's answers (undo)
         this.panelOpen = {}; // the right panel's <details> are rebuilt every render; this keeps their open/closed state
@@ -464,7 +465,7 @@ export class CompanionView {
         if (!tile) return;
         const { units, marks } = this.tileContents(tile, this.shown);
         this.showModal(h('div', { class: 'check' },
-            h('h3', {}, `${tile} · ${t('cmp.map.cover')} ${coverText(TILES[tile].cover)}`),
+            h('h3', {}, `${tile} · ${t('cmp.map.cover')} ${coverText(tileCover(tile, this.sc.hills))}`),
             h('p', {}, h('b', {}, `${t('cmp.check.units')}: `), units),
             h('p', {}, h('b', {}, `${t('cmp.check.markers')}: `), marks),
             h('div', { class: 'buttons' }, h('button', { class: 'primary', onclick: () => this.hideModal() }, t('cmp.close')))));
